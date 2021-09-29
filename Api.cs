@@ -60,7 +60,7 @@ namespace DotNet
 
         public async Task<List<FetchResponse>> FetchGame()
         {
-            var response = await _client.GetAsync("fetch_game");
+            var response = await _client.GetAsync("fetch");
             var result = await response.Content.ReadAsStringAsync();
             if (response.StatusCode != HttpStatusCode.OK)
             {
