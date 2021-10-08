@@ -52,6 +52,7 @@ namespace DotNet
             while (PackagesLeft())
             {
                 // TODO Börja här!
+                // Det här är en test!
                 var pack = FindBestPackage(FindNextAreaToFit());
                 if (pack != null)
                 {
