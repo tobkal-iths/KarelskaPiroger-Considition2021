@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "tC/2Amgw/LlVcsYoNxXozrHrLusNQ4V/YXaGAvlnnrYDijcXVcT+JbPR/eoQPavBT0GCPWY00yBHBSnhtcohww==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\tobia\\source\\repos\\KarelskaPiroger-Considition2021\\DotNet.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\tobia\\.nuget\\packages\\newtonsoft.json\\11.0.2\\newtonsoft.json.11.0.2.nupkg.sha512"
+  ],
+  "logs": []
+}

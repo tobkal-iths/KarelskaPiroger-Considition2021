@@ -9,7 +9,7 @@ namespace DotNet
 {
     public static class Program
     {
-        private const string ApiKey = "";  // TODO: Enter your API key
+        private const string ApiKey = "20eb7658-ce8d-4081-9c6b-8337a0ee4e5c";  // TODO: Enter your API key
         // The different map names can be found on considition.com/rules
         private const string Map = "training1";     // TODO: Enter your desired map
         private static readonly GameLayer GameLayer = new(ApiKey);
@@ -17,14 +17,15 @@ namespace DotNet
         public static void Main(string[] args)
         {
             var gameInformation = GameLayer.NewGame(Map);
-            GreedySolver greedySolver = new GreedySolver(gameInformation.Dimensions, gameInformation.Vehicle);
-            var solution = greedySolver.Solve();
+            //GreedySolver greedySolver = new GreedySolver(gameInformation.Dimensions, gameInformation.Vehicle);
+            //var solution = greedySolver.Solve();
+            var superSolver = new SuperSolver(gameInformation.Dimensions, gameInformation.Vehicle);
+            var solution = superSolver.Solve();
             var submitSolution = GameLayer.Submit(JsonSerializer.Serialize(solution), Map);
            
             Console.WriteLine("Your GameId is: " + submitSolution.GameId);
             Console.WriteLine("Your score is: " + submitSolution.Score);
             Console.WriteLine("Link to visualisation" + submitSolution.Link);
-
         }
     }
 }
