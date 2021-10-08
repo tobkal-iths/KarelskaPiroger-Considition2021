@@ -53,6 +53,7 @@ namespace DotNet
             {
                 // TODO Börja här!
                 // Det här är en test!
+                // Det här är också en test!
                 var pack = FindBestPackage(FindNextAreaToFit());
                 if (pack != null)
                 {
