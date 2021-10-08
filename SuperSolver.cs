@@ -44,43 +44,23 @@ namespace DotNet
             PosY = 0;
             PosZ = 0;
 
-            var highestX = 0;
-            var highestZ = 0;
-
             SortPackages(Packages);
 
             while (PackagesLeft())
             {
                 // TODO Börja här!
                 // Det här är en test!
-                // Det här är också en test!
+                // Det här är också en test!??
                 var pack = FindBestPackage(FindNextAreaToFit());
                 if (pack != null)
                 {
-                    highestZ = pack.Height > highestZ ? pack.Height : highestZ;
-                    highestX = pack.Length > highestX ? pack.Length : highestX;
                     PlacePackage(pack);
                     PosY += pack.Width;
                 }
                 else
                 {
-                    if (PosY != 0)
-                    {
-                        PosY = 0;
-                        PosZ += highestZ;
-                        highestZ = 0;
-                    }   
-                    else if (PosZ != 0)
-                    {
-                        PosZ = 0;
-                        PosX += highestX;
-                        highestX = 0;
-                    }
-                    else
-                    {
-                        Console.WriteLine("TRUCK IS FULL! ABORT!");
-                        break;
-                    }
+                    Console.WriteLine("TRUCK IS FULL! ABORT!");
+                    break;
                 }
             }
 
