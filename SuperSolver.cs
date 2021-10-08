@@ -17,17 +17,23 @@ namespace DotNet
         public List<PointPackage> RowListY { get; private set; }
         public List<PointPackage> RowListZ { get; private set; }
 
+        public PointPackage ReplacePack { get; private set; }
         public int PosX { get; private set; }
         public int PosY { get; private set; }
         public int PosZ { get; private set; }
 
         private int _lastPlacedPackageWidth;
+        private int _nextSpace = 0;
         private bool _isYFull = false;
         private bool _isZFull = false;
 
         public SuperSolver(List<Package> packages, Vehicle vehicle)
         {
+            RowListY = new List<PointPackage>();
+            RowListZ = new List<PointPackage>();
+
             GameSolution = new List<PointPackage>();
+
             Packages = packages;
             Truck = vehicle;
 
@@ -73,7 +79,7 @@ namespace DotNet
         /// <returns>Returns a tuple (length, width, height)</returns>
         private (int, int, int) FindNextAreaToFit()
         {
-
+            //ToDo Fixa knasbolliga värden!
             var tmpX = 0;
             var tmpY = 0;
             var tmpZ = 0;
@@ -88,14 +94,21 @@ namespace DotNet
             {
                 if (_isYFull)
                 {
-                    var lowest = RowListY.OrderBy(p => p.z5).First();
+                    var lowest = new PointPackage();
+                    lowest = RowListY.OrderBy(p => p.z5).ToList()[_nextSpace];
+                    _nextSpace++;
+
 
                     var nexts = RowListY.FindAll(p => p.y1 > lowest.y1);
-                    var next = nexts.OrderBy(p => p.y1).First();
+                    if (nexts.Count > 0)
+                    {
+                        var next = nexts.OrderBy(p => p.y1).First();
 
-                    tmpZ = lowest.z5;
-                    tmpY = next.y1 - lowest.y1;
-                    tmpX = Truck.Length - lowest.x5;
+                        tmpZ = lowest.z5;
+                        tmpY = next.y1 - lowest.y1;
+                        tmpX = Truck.Length - lowest.x5;
+                    }
+                    ReplacePack = lowest;
                 }
                 else
                 {
@@ -114,9 +127,20 @@ namespace DotNet
 
         private void PlacePackage(Package pack)
         {
-            GameSolution.Add(MakePointPackage(pack));
+            var pointPack = MakePointPackage(pack);
+            GameSolution.Add(pointPack);
             _lastPlacedPackageWidth += pack.Width;
+            _nextSpace = 0;
+
             RemovePackFromList(pack);
+
+            if (_isYFull)
+            {
+                RowListY.Remove(ReplacePack);
+                RowListY.Add(pointPack);
+            }
+            else
+                RowListY.Add(pointPack);
         }
 
         private void RemovePackFromList(Package pack)
@@ -150,9 +174,9 @@ namespace DotNet
         }
 
         /// <summary>
-        /// Finds the best package to place based on current preferences.
+        /// Finds the package that best fits the given area.
         /// </summary>
-        /// <returns>Returns a Package from the given array.</returns>
+        /// <returns>Returns a Package, or null if none would fit the area.</returns>
         private Package FindBestPackage((int, int, int)area)
         {
 
@@ -170,6 +194,14 @@ namespace DotNet
                             {
                                 return pack;
                             }
+                            else
+                            {                      
+                                if (!_isYFull)
+                                {
+                                    _isYFull = true;
+                                    i--;
+                                }
+                            }
                         }
                     }
                 }
@@ -182,20 +214,20 @@ namespace DotNet
             return pack.Length < area.Item1 && pack.Width < area.Item2 && pack.Height < area.Item3;
         }
 
-        private bool DoesPackageFitX(Package pack)
-        {
-            return pack.Length < Truck.Length - PosX;
-        }
+        //private bool DoesPackageFitX(Package pack)
+        //{
+        //    return pack.Length < Truck.Length - PosX;
+        //}
 
-        private bool DoesPackageFitZ(Package pack)
-        {
-            return pack.Height < Truck.Height - PosZ;
-        }
+        //private bool DoesPackageFitZ(Package pack)
+        //{
+        //    return pack.Height < Truck.Height - PosZ;
+        //}
 
-        private bool DoesPackageFitY(Package pack)
-        {
-            return pack.Width < Truck.Width - PosY;
-        }
+        //private bool DoesPackageFitY(Package pack)
+        //{
+        //    return pack.Width < Truck.Width - PosY;
+        //}
 
 
         /// <summary>
