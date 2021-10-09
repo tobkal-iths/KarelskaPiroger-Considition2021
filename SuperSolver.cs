@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Threading.Tasks.Dataflow;
 using DotNet.models;
 
 namespace DotNet
@@ -54,14 +55,10 @@ namespace DotNet
 
             while (PackagesLeft())
             {
-                // TODO Börja här!
-                // Det här är en test!
-                // Det här är också en test!??
                 var pack = FindBestPackage(FindNextAreaToFit());
                 if (pack != null)
                 {
                     PlacePackage(pack);
-                    PosY += pack.Width;
                 }
                 else
                 {
@@ -79,12 +76,9 @@ namespace DotNet
         /// <returns>Returns a tuple (length, width, height)</returns>
         private (int, int, int) FindNextAreaToFit()
         {
-            //ToDo Fixa knasbolliga värden!
             var tmpX = 0;
             var tmpY = 0;
             var tmpZ = 0;
-
-            var area = (0, 0, 0);
 
             if (_isZFull)
             {
@@ -102,25 +96,44 @@ namespace DotNet
                     var nexts = RowListY.FindAll(p => p.y1 > lowest.y1);
                     if (nexts.Count > 0)
                     {
-                        var next = nexts.OrderBy(p => p.y1).First();
+                        var next = nexts.First();
 
-                        tmpZ = lowest.z5;
+                        tmpX = Truck.Length;
                         tmpY = next.y1 - lowest.y1;
-                        tmpX = Truck.Length - lowest.x5;
+                        tmpZ = Truck.Height - lowest.z5;
                     }
+                    else if (lowest != null)
+                    {
+                        tmpY = Truck.Width - lowest.y1;
+                        tmpZ = lowest.z5;
+                        tmpX = Truck.Length - lowest.x5;   
+                    }
+                    else
+                    {
+                        tmpX = Truck.Length;
+                        tmpY = Truck.Width - _lastPlacedPackageWidth;
+                        tmpZ = Truck.Height;
+                    }
+                    
                     ReplacePack = lowest;
+                    
+                    PosX = lowest.x1;
+                    PosY = lowest.y1;
+                    PosZ = lowest.z5;
                 }
                 else
                 {
                     tmpZ = Truck.Height;
                     tmpX = Truck.Length;
                     tmpY = Truck.Width - _lastPlacedPackageWidth;
+                    
+                    PosX = 0;
+                    PosY = _lastPlacedPackageWidth;
+                    PosZ = 0;
                 }
             }
 
-            area.Item1 = tmpX;
-            area.Item2 = tmpY;
-            area.Item3 = tmpZ;
+            var area = (tmpX, tmpY, tmpZ);
 
             return area;
         }
@@ -199,7 +212,6 @@ namespace DotNet
                                 if (!_isYFull)
                                 {
                                     _isYFull = true;
-                                    i--;
                                 }
                             }
                         }
@@ -289,32 +301,3 @@ namespace DotNet
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// |      |
-// |      |
-// |      |
-// |      |
-// | X XX |
-// |XXXXX |
