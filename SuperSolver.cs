@@ -27,6 +27,7 @@ namespace DotNet
         private int _nextSpace = 0;
         private bool _isYFull = false;
         private bool _isZFull = false;
+        private bool _isBothFull = false;
 
         public SuperSolver(List<Package> packages, Vehicle vehicle)
         {
@@ -62,8 +63,13 @@ namespace DotNet
                 }
                 else
                 {
-                    Console.WriteLine("TRUCK IS FULL! ABORT!");
-                    break;
+                    //ToDo Change this. It is temporary for debugging purposes.
+                    if (_isZFull)
+                    {
+                        Console.WriteLine("TRUCK IS FULL! ABORT!");
+                        break;
+                    }
+
                 }
             }
 
@@ -82,7 +88,7 @@ namespace DotNet
 
             if (_isZFull)
             {
-                
+                // Do the same thing as in _isYFull but 3D.
             }
             else
             {
@@ -90,7 +96,11 @@ namespace DotNet
                 {
                     var lowest = new PointPackage();
                     lowest = RowListY.OrderBy(p => p.z5).ToList()[_nextSpace];
-                    _nextSpace++;
+                    // Make sure the index does not go out of bounds, but change to x-row.
+                    if (_nextSpace < RowListY.Count - 1)
+                        _nextSpace++;
+                    else
+                        _isZFull = true;
 
 
                     var nexts = RowListY.FindAll(p => p.y1 > lowest.y1);
@@ -215,6 +225,8 @@ namespace DotNet
                                 }
                             }
                         }
+                        //ToDo It might be smarter to put the _isYFull check here. to make sure that all the best suited packages are tested.
+                        // Now it just checks if the first and biggest package fits and if it does not fit considers the Y-row full.
                     }
                 }
             }
