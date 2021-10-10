@@ -27,7 +27,7 @@ namespace DotNet
         private int _nextSpace = 0;
         private bool _isYFull = false;
         private bool _isZFull = false;
-        private bool _isBothFull = false;
+        private bool _isXFull = false;
 
         public SuperSolver(List<Package> packages, Vehicle vehicle)
         {
@@ -56,21 +56,32 @@ namespace DotNet
 
             while (PackagesLeft())
             {
-                var pack = FindBestPackage(FindNextAreaToFit());
+                if (_isXFull)
+                {
+                    Console.WriteLine("TRUCK IS FULL, ABORT!");
+                    break;
+                }
+
+                Package pack;
+                if (PosZ == 0)
+                    pack = FindBestPackage(FindNextAreaToFit());
+                else
+                    pack = FindBestPackage(FindNextAreaToFit(), false);
+                
                 if (pack != null)
                 {
                     PlacePackage(pack);
                 }
-                else
-                {
-                    //ToDo Change this. It is temporary for debugging purposes.
-                    if (_isZFull)
-                    {
-                        Console.WriteLine("TRUCK IS FULL! ABORT!");
-                        break;
-                    }
-
-                }
+                // else
+                // {
+                //     //ToDo Change this. It is temporary for debugging purposes.
+                //     if (_isZFull)
+                //     {
+                //         Console.WriteLine("Z IS FULL! ABORT!");
+                //         break;
+                //     }
+                //
+                // }
             }
 
             return GameSolution;
@@ -88,59 +99,94 @@ namespace DotNet
 
             if (_isZFull)
             {
-                // Do the same thing as in _isYFull but 3D.
+                var lowest = new PointPackage();
+                lowest = RowListZ.OrderBy(p => p.x5).ToList()[_nextSpace];
+                
+                if (_nextSpace < RowListZ.Count - 1)
+                    _nextSpace++;
+                else
+                    _isXFull = true;
+                
+                // var nexts = RowListY.FindAll(p => p.y1 > lowest.y1);
+                // if (nexts.Count > 0)
+                // {
+                //     var next = nexts.First();
+                //
+                //     tmpX = Truck.Length;
+                //     tmpY = next.y1 - lowest.y1;
+                //     tmpZ = Truck.Height - lowest.z5;
+                // }
+                // else if (lowest != null)
+                // {
+                //     tmpY = Truck.Width - lowest.y1;
+                //     tmpZ = lowest.z5;
+                //     tmpX = Truck.Length - lowest.x5;   
+                // }
+                // else
+                // {
+                //     tmpX = Truck.Length;
+                //     tmpY = Truck.Width - _lastPlacedPackageWidth;
+                //     tmpZ = Truck.Height;
+                // }
+                
+                ReplacePack = lowest;
+
+                PosX = lowest.x5;
+                PosY = lowest.y1;
+                PosZ = lowest.z1;
+                
+                tmpX = Truck.Length - lowest.x5;
+                tmpY = lowest.y5 - lowest.y1;
+                tmpZ = lowest.z5 - lowest.z1;
             }
-            else
+            else if (_isYFull)
             {
-                if (_isYFull)
+                var lowest = new PointPackage();
+                lowest = RowListY.OrderBy(p => p.z5).ToList()[_nextSpace];
+                
+                if (_nextSpace < RowListY.Count - 1)
+                    _nextSpace++;
+                else
+                    _isZFull = true;
+
+
+                var nexts = RowListY.FindAll(p => p.y1 > lowest.y1);
+                if (nexts.Count > 0)
                 {
-                    var lowest = new PointPackage();
-                    lowest = RowListY.OrderBy(p => p.z5).ToList()[_nextSpace];
-                    // Make sure the index does not go out of bounds, but change to x-row.
-                    if (_nextSpace < RowListY.Count - 1)
-                        _nextSpace++;
-                    else
-                        _isZFull = true;
+                    var next = nexts.First();
 
-
-                    var nexts = RowListY.FindAll(p => p.y1 > lowest.y1);
-                    if (nexts.Count > 0)
-                    {
-                        var next = nexts.First();
-
-                        tmpX = Truck.Length;
-                        tmpY = next.y1 - lowest.y1;
-                        tmpZ = Truck.Height - lowest.z5;
-                    }
-                    else if (lowest != null)
-                    {
-                        tmpY = Truck.Width - lowest.y1;
-                        tmpZ = lowest.z5;
-                        tmpX = Truck.Length - lowest.x5;   
-                    }
-                    else
-                    {
-                        tmpX = Truck.Length;
-                        tmpY = Truck.Width - _lastPlacedPackageWidth;
-                        tmpZ = Truck.Height;
-                    }
-                    
-                    ReplacePack = lowest;
-                    
-                    PosX = lowest.x1;
-                    PosY = lowest.y1;
-                    PosZ = lowest.z5;
+                    tmpX = Truck.Length;
+                    tmpY = next.y1 - lowest.y1;
+                    tmpZ = Truck.Height - lowest.z5;
+                }
+                else if (lowest != null)
+                {
+                    tmpY = Truck.Width - lowest.y1;
+                    tmpZ = lowest.z5;
+                    tmpX = Truck.Length - lowest.x5;   
                 }
                 else
                 {
-                    tmpZ = Truck.Height;
                     tmpX = Truck.Length;
                     tmpY = Truck.Width - _lastPlacedPackageWidth;
-                    
-                    PosX = 0;
-                    PosY = _lastPlacedPackageWidth;
-                    PosZ = 0;
+                    tmpZ = Truck.Height;
                 }
+                
+                ReplacePack = lowest;
+                
+                PosX = lowest.x1;
+                PosY = lowest.y1;
+                PosZ = lowest.z5;
+            }
+            else
+            {
+                tmpZ = Truck.Height;
+                tmpX = Truck.Length;
+                tmpY = Truck.Width - _lastPlacedPackageWidth;
+                
+                PosX = 0;
+                PosY = _lastPlacedPackageWidth;
+                PosZ = 0;
             }
 
             var area = (tmpX, tmpY, tmpZ);
@@ -156,14 +202,23 @@ namespace DotNet
             _nextSpace = 0;
 
             RemovePackFromList(pack);
-
-            if (_isYFull)
+            
+            if (_isZFull)
+            {
+                RowListZ.Remove(ReplacePack);
+                RowListZ.Add(pointPack);
+            }
+            else if (_isYFull)
             {
                 RowListY.Remove(ReplacePack);
                 RowListY.Add(pointPack);
+                RowListZ.Add(pointPack);
             }
             else
+            {
                 RowListY.Add(pointPack);
+                RowListZ.Add(pointPack);   
+            }
         }
 
         private void RemovePackFromList(Package pack)
@@ -200,36 +255,59 @@ namespace DotNet
         /// Finds the package that best fits the given area.
         /// </summary>
         /// <returns>Returns a Package, or null if none would fit the area.</returns>
-        private Package FindBestPackage((int, int, int)area)
+        private Package FindBestPackage((int, int, int)area, bool heavyPrio = true)
         {
-
-            for (int w = WeightClasses - 1; w >= 0; w--)
+            if (heavyPrio)
             {
-                for (int o = OrderClasses - 1; o >= 0; o--)
+                for (int w = WeightClasses - 1; w >= 0; w--)
                 {
-                    if (SortedPackages[w, o].Count > 0)
+                    for (int o = OrderClasses - 1; o >= 0; o--)
                     {
-                        for (int i = 0; i < SortedPackages[w, o].Count; i++)
+                        if (SortedPackages[w, o].Count > 0)
                         {
-                            var pack = SortedPackages[w, o][i];
-
-                            if (DoesPackageFit(pack, area))
+                            for (int i = 0; i < SortedPackages[w, o].Count; i++)
                             {
-                                return pack;
-                            }
-                            else
-                            {                      
-                                if (!_isYFull)
+                                var pack = SortedPackages[w, o][i];
+
+                                if (DoesPackageFit(pack, area))
                                 {
-                                    _isYFull = true;
+                                    return pack;
                                 }
                             }
+                            if (!_isYFull)
+                            {
+                                _isYFull = true;
+                            }
                         }
-                        //ToDo It might be smarter to put the _isYFull check here. to make sure that all the best suited packages are tested.
-                        // Now it just checks if the first and biggest package fits and if it does not fit considers the Y-row full.
                     }
                 }
             }
+            else
+            {
+                for (int w = 0; w < WeightClasses; w++)
+                {
+                    for (int o = OrderClasses - 1; o >= 0; o--)
+                    {
+                        if (SortedPackages[w, o].Count > 0)
+                        {
+                            for (int i = 0; i < SortedPackages[w, o].Count; i++)
+                            {
+                                var pack = SortedPackages[w, o][i];
+
+                                if (DoesPackageFit(pack, area))
+                                {
+                                    return pack;
+                                }
+                            }
+                            if (!_isYFull)
+                            {
+                                _isYFull = true;
+                            }
+                        }
+                    }
+                }
+            }
+            
             return null;
         }
 
