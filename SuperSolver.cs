@@ -225,8 +225,14 @@ namespace DotNet
         {
             foreach (var list in SortedPackages)
             {
-                if (list.Contains(pack))
-                    list.Remove(pack);
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].Id == pack.Id)
+                        list.RemoveAt(i);
+                }
+
+                //if (list.Contains(pack))
+                //    list.Remove(pack);
             }
         }
 
@@ -269,10 +275,22 @@ namespace DotNet
                             {
                                 var pack = SortedPackages[w, o][i];
 
-                                if (DoesPackageFit(pack, area))
+                                //Todo Här någon stans ska vi börja snurra skiten!
+
+                                for (int j = 0; j < 6; j++)
                                 {
-                                    return pack;
+                                    var turnedPack = TurnPackage(pack, j);
+
+                                    if (DoesPackageFit(turnedPack, area))
+                                    {
+                                        return turnedPack;
+                                    }
                                 }
+
+                                //if (DoesPackageFit(pack, area))
+                                //{
+                                //    return pack;
+                                //}
                             }
                             if (!_isYFull)
                             {
@@ -294,10 +312,22 @@ namespace DotNet
                             {
                                 var pack = SortedPackages[w, o][i];
 
-                                if (DoesPackageFit(pack, area))
+                                //ToDo Implementera skiten bara!
+
+                                for (int j = 0; j < 6; j++)
                                 {
-                                    return pack;
+                                    var turnedPack = TurnPackage(pack, j);
+
+                                    if (DoesPackageFit(turnedPack, area))
+                                    {
+                                        return turnedPack;
+                                    }
                                 }
+
+                                //if (DoesPackageFit(pack, area))
+                                //{
+                                //    return pack;
+                                //}
                             }
                             if (!_isYFull)
                             {
@@ -346,6 +376,54 @@ namespace DotNet
                 }
             }
             return false;
+        }
+
+        private Package TurnPackage(Package pack, int turn)
+        {
+            Package turnedPack = new();
+            turnedPack.Id = pack.Id;
+            turnedPack.OrderClass = pack.OrderClass;
+            turnedPack.WeightClass = pack.WeightClass;
+            int l = pack.Length;
+            int w = pack.Width;
+            int h = pack.Height;
+
+            switch (turn)
+            {
+                case 0:
+                    turnedPack.Length = l;
+                    turnedPack.Width = w;
+                    turnedPack.Height = h;
+                    return turnedPack;
+                case 1:
+                    turnedPack.Length = l;
+                    turnedPack.Width = h;
+                    turnedPack.Height = w;
+                    return turnedPack;
+                case 2:
+                    turnedPack.Length = w;
+                    turnedPack.Width = l;
+                    turnedPack.Height = h;
+                    return turnedPack;
+                case 3:
+                    turnedPack.Length = w;
+                    turnedPack.Width = h;
+                    turnedPack.Height = l;
+                    return turnedPack;
+                case 4:
+                    turnedPack.Length = h;
+                    turnedPack.Width = w;
+                    turnedPack.Height = l;
+                    return turnedPack;
+                case 5:
+                    turnedPack.Length = h;
+                    turnedPack.Width = l;
+                    turnedPack.Height = w;
+                    return turnedPack;
+                default:
+                    return null;
+            }
+
         }
 
         /// <summary>
