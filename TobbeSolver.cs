@@ -5,7 +5,7 @@ using DotNet.models;
 
 namespace DotNet
 {
-    public class SuperSolver
+    public class TobbeSolver
     {
         private const int WeightClasses = 2;
         private const int OrderClasses = 5;
@@ -29,7 +29,7 @@ namespace DotNet
 
         private int _iterator = 0;
 
-        public SuperSolver(List<Package> packages, Vehicle vehicle)
+        public TobbeSolver(List<Package> packages, Vehicle vehicle)
         {
             RowListY = new List<PointPackage>();
             RowListZ = new List<PointPackage>();
