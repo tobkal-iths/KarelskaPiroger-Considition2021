@@ -15,6 +15,7 @@ namespace DotNet
         private List<List<Package>> _heaps;
         private List<Package> _packages;
         private int _xp, _yp, _zp;
+        private int _lastKnownLongestPackage;
         public List<PointPackage> GameSolution { get; private set; }
         public JonasSolver(List<Package> packages, Vehicle vehicle)
         {
@@ -38,7 +39,7 @@ namespace DotNet
                 pack.Height = dimensions[2];
             }
 
-            _packages = packages.OrderByDescending(p => p.Height).ToList();
+            _packages = packages.OrderByDescending(p => p.Height * p.Length * p.Width).ToList();
         }
 
         public List<PointPackage> Solve()
@@ -52,21 +53,92 @@ namespace DotNet
 
         private void MakeHeaps()
         {
+            double accuracy = 1;
             while (_packages.Count > 0)
             {
                 _heaps.Add(new List<Package>());
-
+                var currentHeapOriginal = new List<Package>();
+                int temp = 0;
                 foreach (var pack in _packages)
                 {
-                    int temp = _heaps[^1].Sum(p => p.Height);
+                    temp = _heaps[^1].Sum(p => p.Height);
                     if (temp + pack.Height < _truckZ)
-                        _heaps[^1].Add(pack);
+                    {
+                        if (_heaps[^1].Count > 0)
+                        {
+                            if ((_heaps[^1][0].Length < pack.Length * accuracy) || (_heaps[^1][0].Length * accuracy < pack.Length))
+                            {
+                                if (_heaps[^1][0].Width < pack.Width * accuracy || _heaps[^1][0].Width * accuracy < pack.Width)
+                                {
+                                    _heaps[^1].Add(pack);
+                                    currentHeapOriginal.Add(pack);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            _heaps[^1].Add(pack);
+                            currentHeapOriginal.Add(pack);
+                        }
+                    }
                 }
-                foreach (var pack in _heaps[^1])
-                {
+
+                foreach (var pack in currentHeapOriginal)
                     _packages.Remove(pack);
-                }
             }
+        }
+
+        // Används inte i dagsläget, men den får ligga kvar för framtida optimering.
+        private Package TurnPackage(Package pack, int turn)
+        {
+            Package turnedPack = new();
+            turnedPack.Id = pack.Id;
+            turnedPack.OrderClass = pack.OrderClass;
+            turnedPack.WeightClass = pack.WeightClass;
+            int l = pack.Length;
+            int w = pack.Width;
+            int h = pack.Height;
+
+            switch (turn)
+            {
+                case 0:
+                    turnedPack.Length = l;
+                    turnedPack.Width = w;
+                    turnedPack.Height = h;
+                    break;
+                case 1:
+                    turnedPack.Length = l;
+                    turnedPack.Width = h;
+                    turnedPack.Height = w;
+                    break;
+                case 2:
+                    turnedPack.Length = w;
+                    turnedPack.Width = l;
+                    turnedPack.Height = h;
+                    break;
+                case 3:
+                    turnedPack.Length = w;
+                    turnedPack.Width = h;
+                    turnedPack.Height = l;
+                    break;
+                case 4:
+                    turnedPack.Length = h;
+                    turnedPack.Width = w;
+                    turnedPack.Height = l;
+                    break;
+                case 5:
+                    turnedPack.Length = h;
+                    turnedPack.Width = l;
+                    turnedPack.Height = w;
+                    break;
+                default:
+                    return null;
+            }
+            turnedPack.Id = pack.Id;
+            turnedPack.OrderClass = pack.OrderClass;
+            turnedPack.WeightClass = pack.WeightClass;
+
+            return turnedPack;
         }
 
         private void SortHeaps()
@@ -81,7 +153,6 @@ namespace DotNet
 
         private void PackTruck()
         {
-            int tempX = 0;
             int tempY = 0;
 
             foreach (var heap in _heaps)
@@ -90,7 +161,6 @@ namespace DotNet
                 foreach (var pack in heap)
                 {
                     tempY = pack.Width > tempY ? pack.Width : tempY;
-                    tempX = pack.Length > tempX ? pack.Length : tempX;
                 }
                 if (_yp + tempY < _truckY)
                 {
@@ -102,13 +172,10 @@ namespace DotNet
                     _yp += tempY;
                     tempY = 0;
                 }
-                else // x1: 91 | X5: 122 || x1: 117 | x5: 129
+                else
                 {
                     _yp = 0;
-                    _xp += tempX;
-                    if (_xp == 117)
-                        _xp = 122;
-                    tempX = 0;
+                    _xp = _xp < _lastKnownLongestPackage ? _lastKnownLongestPackage : _xp;
                     foreach (var pack in heap)
                     {
                         AddPackage(pack);
@@ -152,6 +219,8 @@ namespace DotNet
                 OrderClass = package.OrderClass,
                 WeightClass = package.WeightClass
             };
+
+            _lastKnownLongestPackage = _lastKnownLongestPackage < placedPackage.x5 ? placedPackage.x5 : _lastKnownLongestPackage;
 
             GameSolution.Add(placedPackage);
         }
