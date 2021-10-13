@@ -12,6 +12,7 @@ namespace DotNet
         private readonly int _truckX;
         private readonly int _truckY;
         private readonly int _truckZ;
+        private readonly int _orderClasses;
         private List<List<Package>> _heaps;
         private List<Package> _packages;
         private int _xp, _yp, _zp;
@@ -24,6 +25,7 @@ namespace DotNet
             _truckZ = vehicle.Height;
             _heaps = new List<List<Package>>();
             GameSolution = new List<PointPackage>();
+            _orderClasses = 5;
 
 
             foreach (var pack in packages)
@@ -53,38 +55,44 @@ namespace DotNet
 
         private void MakeHeaps()
         {
-            double accuracy = 1.45;
+            double accuracy = 1.475;
             while (_packages.Count > 0)
             {
                 _heaps.Add(new List<Package>());
                 var currentHeapOriginal = new List<Package>();
-                int temp = 0;
-                foreach (var pack in _packages)
+                int tempHeight = 0;
+                for (int i = 0; i < _orderClasses; i++)
                 {
-                    temp = _heaps[^1].Sum(p => p.Height);
-                    if (temp + pack.Height < _truckZ)
+                    foreach (var pack in _packages)
                     {
-                        if (_heaps[^1].Count > 0)
+                        var lastHeap = _heaps[^1];
+                        tempHeight = lastHeap.Sum(p => p.Height);
+                        if (tempHeight + pack.Height < _truckZ)
                         {
-                            if ((_heaps[^1][0].Length < pack.Length * accuracy) || (_heaps[^1][0].Length * accuracy < pack.Length))
+                            if (lastHeap.Count > 0)
                             {
-                                if (_heaps[^1][0].Width < pack.Width * accuracy || _heaps[^1][0].Width * accuracy < pack.Width)
+                                if ((lastHeap[0].Length < pack.Length * accuracy) || (lastHeap[0].Length * accuracy < pack.Length))
                                 {
-                                    _heaps[^1].Add(pack);
-                                    currentHeapOriginal.Add(pack);
+                                    if (lastHeap[0].Width < pack.Width * accuracy || lastHeap[0].Width * accuracy < pack.Width)
+                                    {
+                                        if (lastHeap[0].OrderClass + i <= pack.OrderClass || lastHeap[0].OrderClass <= pack.OrderClass + i)
+                                        {
+                                            lastHeap.Add(pack);
+                                            currentHeapOriginal.Add(pack);
+                                        }
+                                    }
                                 }
                             }
-                        }
-                        else
-                        {
-                            _heaps[^1].Add(pack);
-                            currentHeapOriginal.Add(pack);
+                            else
+                            {
+                                lastHeap.Add(pack);
+                                currentHeapOriginal.Add(pack);
+                            }
                         }
                     }
+                    foreach (var pack in currentHeapOriginal)
+                        _packages.Remove(pack);
                 }
-
-                foreach (var pack in currentHeapOriginal)
-                    _packages.Remove(pack);
             }
         }
 
