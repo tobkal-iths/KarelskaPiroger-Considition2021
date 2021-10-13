@@ -47,7 +47,6 @@ C:\Users\olsso\Source\Repos\KarelskaPiroger-Considition2021\obj\Debug\net5.0\Dot
 C:\Users\olsso\Source\Repos\KarelskaPiroger-Considition2021\obj\Debug\net5.0\DotNet.AssemblyInfoInputs.cache
 C:\Users\olsso\Source\Repos\KarelskaPiroger-Considition2021\obj\Debug\net5.0\DotNet.AssemblyInfo.cs
 C:\Users\olsso\Source\Repos\KarelskaPiroger-Considition2021\obj\Debug\net5.0\DotNet.csproj.CoreCompileInputs.cache
-C:\Users\olsso\Source\Repos\KarelskaPiroger-Considition2021\obj\Debug\net5.0\DotNet.csproj.CopyComplete
 C:\Users\olsso\Source\Repos\KarelskaPiroger-Considition2021\obj\Debug\net5.0\DotNet.dll
 C:\Users\olsso\Source\Repos\KarelskaPiroger-Considition2021\obj\Debug\net5.0\ref\DotNet.dll
 C:\Users\olsso\Source\Repos\KarelskaPiroger-Considition2021\obj\Debug\net5.0\DotNet.pdb

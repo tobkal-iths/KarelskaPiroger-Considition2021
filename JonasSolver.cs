@@ -53,7 +53,7 @@ namespace DotNet
 
         private void MakeHeaps()
         {
-            double accuracy = 1;
+            double accuracy = 1.4;
             while (_packages.Count > 0)
             {
                 _heaps.Add(new List<Package>());
