@@ -408,7 +408,6 @@ namespace DotNet
             {
                 for (int i = 0; i < list.Count; i++)
                 {
-                    // TODO är den här rätt?
                     var dimensions = new int[3];
                     dimensions[0] = list[i].Length;
                     dimensions[1] = list[i].Width;

@@ -51,26 +51,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\olsso\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {},
+    "C:\\Users\\tobia\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\olsso\\Source\\Repos\\KarelskaPiroger-Considition2021\\DotNet.csproj",
+      "projectUniqueName": "C:\\Users\\tobia\\source\\repos\\KarelskaPiroger-Considition2021\\DotNet.csproj",
       "projectName": "DotNet",
-      "projectPath": "C:\\Users\\olsso\\Source\\Repos\\KarelskaPiroger-Considition2021\\DotNet.csproj",
-      "packagesPath": "C:\\Users\\olsso\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\olsso\\Source\\Repos\\KarelskaPiroger-Considition2021\\obj\\",
+      "projectPath": "C:\\Users\\tobia\\source\\repos\\KarelskaPiroger-Considition2021\\DotNet.csproj",
+      "packagesPath": "C:\\Users\\tobia\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\tobia\\source\\repos\\KarelskaPiroger-Considition2021\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
         "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\"
       ],
       "configFilePaths": [
-        "C:\\Users\\olsso\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Users\\tobia\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Xamarin.Offline.config"
       ],
