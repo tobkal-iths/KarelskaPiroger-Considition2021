@@ -387,4 +387,6 @@ FodyWeavers.xsd
 .idea/
 *.sln.iml
 .vs/DotNet/v16/.suo
-*.cache
+.vs/DotNet/v16/.suo
+.vs/DotNet/v16/.suo
+.vs/DotNet/v16/.suo
