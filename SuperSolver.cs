@@ -18,6 +18,8 @@ namespace DotNet
         private List<Package> _packages;
         private int _xp, _yp, _zp;
         private int _lastKnownLongestPackage;
+        private readonly double _percent = 0.25d;
+        private readonly int _orderClassAccuracyStartingValue = 2;
         public List<PointPackage> GameSolution { get; private set; }
         public SuperSolver(List<Package> packages, Vehicle vehicle)
         {
@@ -38,13 +40,11 @@ namespace DotNet
                 dimensions[2] = pack.Height;
                 Array.Sort(dimensions);
 
-                //var packVolume = pack.Height * pack.Length * pack.Width;
-
                 pack.Length = dimensions[0];
                 pack.Width = dimensions[1];
                 pack.Height = dimensions[2];
 
-                //if (pack.Height - pack.Length > 55)
+                //if (pack.Height - pack.Length > pack.Width * 1.75)
                 //{
                 //    pack.Length = dimensions[1];
                 //    pack.Width = dimensions[2];
@@ -65,6 +65,8 @@ namespace DotNet
 
             if (_isTruckOverFull)
             {
+                _xp = 0;
+                _lastKnownLongestPackage = 0;
                 RotatePacks();
                 GameSolution = new List<PointPackage>();
                 PackTruck();
@@ -74,16 +76,15 @@ namespace DotNet
         }
 
         private void MakeHeaps()
-        {
-            double percent = 0.25;
-            var minusPercent = 1 - percent;
-            var plusPercent = 1 + percent;
+        {            
+            var minusPercent = 1 - _percent;
+            var plusPercent = 1 + _percent;
             while (_packages.Count > 0)
             {
                 _heaps.Add(new List<Package>());
                 var currentHeapOriginal = new List<Package>();
                 int tempHeight = 0;
-                for (int i = 2; i < _orderClasses; i++)
+                for (int i = _orderClassAccuracyStartingValue; i < _orderClasses; i++)
                 {
                     foreach (var pack in _packages)
                     {
