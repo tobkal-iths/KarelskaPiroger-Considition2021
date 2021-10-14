@@ -13,6 +13,7 @@ namespace DotNet
         private readonly int _truckY;
         private readonly int _truckZ;
         private readonly int _orderClasses;
+        private bool _isTruckOverFull;
         private List<List<Package>> _heaps;
         private List<Package> _packages;
         private int _xp, _yp, _zp;
@@ -27,6 +28,7 @@ namespace DotNet
             GameSolution = new List<PointPackage>();
             _orderClasses = 5;
 
+            var avarageVolume = packages.Sum(p => p.Height * p.Length * p.Width) / packages.Count;
 
             foreach (var pack in packages)
             {
@@ -36,9 +38,19 @@ namespace DotNet
                 dimensions[2] = pack.Height;
                 Array.Sort(dimensions);
 
+                //var packVolume = pack.Height * pack.Length * pack.Width;
+
                 pack.Length = dimensions[0];
                 pack.Width = dimensions[1];
                 pack.Height = dimensions[2];
+
+                //if (pack.Height - pack.Length > 55)
+                //{
+                //    pack.Length = dimensions[1];
+                //    pack.Width = dimensions[2];
+                //    pack.Height = dimensions[0];
+                //}
+
             }
 
             _packages = packages.OrderByDescending(p => p.Height * p.Length * p.Width).ToList();
@@ -50,18 +62,28 @@ namespace DotNet
             SortHeaps();
             PackTruck();
 
+            if (_isTruckOverFull)
+            {
+                RotatePacks();
+                GameSolution = new List<PointPackage>();
+                PackTruck();
+            }
+
             return GameSolution;
         }
 
         private void MakeHeaps()
         {
-            double accuracy = 1.475;
+            //double accuracy = 27;
+            double percent = 0.25;
+            var minusPercent = 1 - percent;
+            var plusPercent = 1 + percent;
             while (_packages.Count > 0)
             {
                 _heaps.Add(new List<Package>());
                 var currentHeapOriginal = new List<Package>();
                 int tempHeight = 0;
-                for (int i = 0; i < _orderClasses; i++)
+                for (int i = 2; i < _orderClasses; i++)
                 {
                     foreach (var pack in _packages)
                     {
@@ -71,11 +93,22 @@ namespace DotNet
                         {
                             if (lastHeap.Count > 0)
                             {
-                                if ((lastHeap[0].Length < pack.Length * accuracy) || (lastHeap[0].Length * accuracy < pack.Length))
+                                //if ((lastHeap[0].Length + accuracy > pack.Length) && (lastHeap[0].Length - accuracy < pack.Length))
+                                //{
+                                //    if (lastHeap[0].Width + accuracy > pack.Width && lastHeap[0].Width - accuracy < pack.Width)
+                                //    {
+                                //        if (lastHeap[0].OrderClass <= pack.OrderClass + i && lastHeap[0].OrderClass >= pack.OrderClass - i)
+                                //        {
+                                //            lastHeap.Add(pack);
+                                //            currentHeapOriginal.Add(pack);
+                                //        }
+                                //    }
+                                //}
+                                if ((lastHeap[0].Length * plusPercent > pack.Length) && (lastHeap[0].Length * minusPercent < pack.Length))
                                 {
-                                    if (lastHeap[0].Width < pack.Width * accuracy || lastHeap[0].Width * accuracy < pack.Width)
+                                    if ((lastHeap[0].Width * plusPercent > pack.Width) && (lastHeap[0].Width * minusPercent < pack.Width))
                                     {
-                                        if (lastHeap[0].OrderClass + i <= pack.OrderClass || lastHeap[0].OrderClass <= pack.OrderClass + i)
+                                        if ((lastHeap[0].OrderClass <= pack.OrderClass + i) && (lastHeap[0].OrderClass >= pack.OrderClass - i))
                                         {
                                             lastHeap.Add(pack);
                                             currentHeapOriginal.Add(pack);
@@ -92,6 +125,20 @@ namespace DotNet
                     }
                     foreach (var pack in currentHeapOriginal)
                         _packages.Remove(pack);
+                }
+            }
+        }
+
+        private void RotatePacks()
+        {
+            foreach (var heap in _heaps)
+            {
+                foreach (var pack in heap)
+                {
+                    int width = pack.Width;
+                    int length = pack.Length;
+                    pack.Width = length;
+                    pack.Length = width;
                 }
             }
         }
@@ -151,6 +198,47 @@ namespace DotNet
 
         private void SortHeaps()
         {
+            //double percent = 0.25;
+            //var minusPercent = 1 - percent;
+            //var plusPercent = 1 + percent;
+            //var tempHeap = new List<Package>();
+            //var tempHeaps = new List<List<Package>>();
+            //foreach (var heap in _heaps)
+            //{
+
+            //    if(heap.Count == 1)
+            //    {
+            //        tempHeaps.Add(heap);
+            //    }
+            //}
+
+            //foreach (var heap in tempHeaps)
+            //{
+            //    var tempHeightOfTempHeap = tempHeap.Sum(p => p.Height);
+            //    if (heap.Count == 1 && tempHeightOfTempHeap + heap[0].Height < _truckZ)
+            //    {
+            //        if (tempHeap.Count > 0)
+            //        {
+            //            if ((tempHeap[0].Length * plusPercent > heap[0].Length) && (tempHeap[0].Length * minusPercent < heap[0].Length))
+            //            {
+            //                if ((tempHeap[0].Width * plusPercent > heap[0].Width) && (tempHeap[0].Width * minusPercent < heap[0].Width))
+            //                {
+            //                    tempHeap.Add(heap[0]);
+            //                    _heaps.Remove(heap);
+            //                }
+            //            }
+            //        }
+            //        else
+            //        {
+            //            tempHeap.Add(heap[0]);
+            //            _heaps.Remove(heap);
+            //        }
+
+            //    }
+            //}
+
+            //_heaps.Add(tempHeap);
+
             for (int i = 0; i < _heaps.Count; i++)
             {
                 _heaps[i] = _heaps[i].OrderByDescending(h => h.WeightClass).ToList();
@@ -229,6 +317,9 @@ namespace DotNet
             };
 
             _lastKnownLongestPackage = _lastKnownLongestPackage < placedPackage.x5 ? placedPackage.x5 : _lastKnownLongestPackage;
+
+            if (_lastKnownLongestPackage > _truckX)
+                _isTruckOverFull = true;
 
             GameSolution.Add(placedPackage);
         }
