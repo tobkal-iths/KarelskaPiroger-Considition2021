@@ -74,7 +74,6 @@ namespace DotNet
 
         private void MakeHeaps()
         {
-            //double accuracy = 27;
             double percent = 0.25;
             var minusPercent = 1 - percent;
             var plusPercent = 1 + percent;
@@ -93,17 +92,6 @@ namespace DotNet
                         {
                             if (lastHeap.Count > 0)
                             {
-                                //if ((lastHeap[0].Length + accuracy > pack.Length) && (lastHeap[0].Length - accuracy < pack.Length))
-                                //{
-                                //    if (lastHeap[0].Width + accuracy > pack.Width && lastHeap[0].Width - accuracy < pack.Width)
-                                //    {
-                                //        if (lastHeap[0].OrderClass <= pack.OrderClass + i && lastHeap[0].OrderClass >= pack.OrderClass - i)
-                                //        {
-                                //            lastHeap.Add(pack);
-                                //            currentHeapOriginal.Add(pack);
-                                //        }
-                                //    }
-                                //}
                                 if ((lastHeap[0].Length * plusPercent > pack.Length) && (lastHeap[0].Length * minusPercent < pack.Length))
                                 {
                                     if ((lastHeap[0].Width * plusPercent > pack.Width) && (lastHeap[0].Width * minusPercent < pack.Width))
