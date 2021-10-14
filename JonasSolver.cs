@@ -59,6 +59,7 @@ namespace DotNet
         public List<PointPackage> Solve()
         {
             MakeHeaps();
+            CheckHeaps();
             SortHeaps();
             PackTruck();
 
@@ -184,7 +185,7 @@ namespace DotNet
             return turnedPack;
         }
 
-        private void SortHeaps()
+        private void CheckHeaps()
         {
             double percent = 0.1;
             var minusPercent = 1 - percent;
@@ -194,7 +195,7 @@ namespace DotNet
             foreach (var heap in _heaps)
             {
 
-                if(heap.Count == 1)
+                if (heap.Count == 1)
                 {
                     tempHeaps.Add(heap);
                 }
@@ -225,7 +226,10 @@ namespace DotNet
             }
 
             _heaps.Add(tempHeap);
+        }
 
+        private void SortHeaps()
+        {
             for (int i = 0; i < _heaps.Count; i++)
             {
                 _heaps[i] = _heaps[i].OrderByDescending(h => h.WeightClass).ToList();
