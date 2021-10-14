@@ -390,3 +390,5 @@ FodyWeavers.xsd
 .vs/DotNet/v16/.suo
 .vs/DotNet/v16/.suo
 .vs/DotNet/v16/.suo
+*.cache
+*.json
