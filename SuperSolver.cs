@@ -19,7 +19,8 @@ namespace DotNet
         private int _xp, _yp, _zp;
         private int _lastKnownLongestPackage;
         private readonly double _percent = 0.25d;
-        private readonly int _orderClassAccuracyStartingValue = 2;
+        private readonly int _orderClassAccuracyStartingValue = 1;
+        private readonly double _packageTurningAccuracy = 2;
         public List<PointPackage> GameSolution { get; private set; }
         public SuperSolver(List<Package> packages, Vehicle vehicle)
         {
@@ -44,13 +45,12 @@ namespace DotNet
                 pack.Width = dimensions[1];
                 pack.Height = dimensions[2];
 
-                //if (pack.Height - pack.Length > pack.Width * 1.75)
-                //{
-                //    pack.Length = dimensions[1];
-                //    pack.Width = dimensions[2];
-                //    pack.Height = dimensions[0];
-                //}
-
+                if (pack.Height - pack.Length > pack.Width * _packageTurningAccuracy)
+                {
+                    pack.Length = dimensions[1];
+                    pack.Width = dimensions[2];
+                    pack.Height = dimensions[0];
+                }
             }
 
             _packages = packages.OrderByDescending(p => p.Height * p.Length * p.Width).ToList();
@@ -59,7 +59,7 @@ namespace DotNet
         public List<PointPackage> Solve()
         {
             MakeHeaps();
-            //CheckHeaps();
+            CheckHeaps();
             SortHeaps();
             PackTruck();
 
@@ -141,6 +141,58 @@ namespace DotNet
             }
 
             _heaps = _heaps.OrderByDescending(h => h.Sum(x => x.OrderClass / h.Count)).ToList();
+        }
+
+        private void CheckHeaps()
+        {
+            var soloHeaps = _heaps.FindAll(h => h.Count == 1).ToList();
+            var soloPacks = new List<Package>();
+            var newHeaps = new List<List<Package>>();
+            foreach (var heap in soloHeaps)
+                soloPacks.Add(heap[0]);
+            soloPacks = soloPacks.OrderByDescending(p => p.Width).ToList();
+
+            for (int i = 0; i < soloPacks.Count; i++)
+            {
+                var newHeap = new List<Package>();
+                newHeap.Add(soloPacks[i]);
+                var newHeapHeight = soloPacks[i].Height;
+                for (int j = i + 1; j < soloPacks.Count; j++)
+                {
+                    if (soloPacks[i].OrderClass == soloPacks[j].OrderClass)
+                    {
+                        if (newHeapHeight + soloPacks[j].Height < _truckZ)
+                        {
+                            newHeap.Add(soloPacks[j]);
+                            newHeapHeight += soloPacks[j].Height;
+                        }
+                    }
+                }
+
+                if (!IsAdded(newHeaps, newHeap))
+                {
+                    newHeaps.Add(newHeap);
+                }
+            }
+
+            foreach (var heap in soloHeaps)
+                _heaps.Remove(heap);
+
+            foreach (var heap in newHeaps)
+                _heaps.Add(heap);
+        }
+
+        private bool IsAdded(List<List<Package>> newHeaps, List<Package> newHeap)
+        {
+            foreach (var heap in newHeaps)
+            {
+                foreach (var pack in heap)
+                {
+                    if (newHeap.Contains(pack))
+                        return true;
+                }
+            }
+            return false;
         }
 
         private void PackTruck()
