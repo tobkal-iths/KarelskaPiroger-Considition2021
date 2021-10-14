@@ -1,255 +1,141 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using DotNet.models;
 
 namespace DotNet
 {
     public class SuperSolver
     {
-        private const int WeightClasses = 2;
-        private const int OrderClasses = 5;
-        public List<Package> Packages { get; }
-        public Vehicle Truck { get; }
-        private List<Package>[,] SortedPackages { get; set; }
-        private List<PointPackage> GameSolution { get; set; }
-        private List<PointPackage> RowListY { get; set; }
-        private List<PointPackage> RowListZ { get; set; }
-        private PointPackage ReplacePack { get; set; }
-        private int PosX { get; set; }
-        private int PosY { get; set; }
-        private int PosZ { get; set; }
-        private int RowX { get; set; }
-
-        private int _lastPlacedPackageWidth;
-        private int _nextSpace = 0;
-
-        private bool _YFull = false;
-        private bool _ZFull = false;
-
-        private int _iterator = 0;
-
+        private readonly int _truckX;
+        private readonly int _truckY;
+        private readonly int _truckZ;
+        private readonly int _orderClasses;
+        private bool _isTruckOverFull;
+        private List<List<Package>> _heaps;
+        private List<Package> _packages;
+        private int _xp, _yp, _zp;
+        private int _lastKnownLongestPackage;
+        public List<PointPackage> GameSolution { get; private set; }
         public SuperSolver(List<Package> packages, Vehicle vehicle)
         {
-            RowListY = new List<PointPackage>();
-            RowListZ = new List<PointPackage>();
-
+            _truckX = vehicle.Length;
+            _truckY = vehicle.Width;
+            _truckZ = vehicle.Height;
+            _heaps = new List<List<Package>>();
             GameSolution = new List<PointPackage>();
+            _orderClasses = 5;
 
-            Packages = packages;
-            Truck = vehicle;
+            var avarageVolume = packages.Sum(p => p.Height * p.Length * p.Width) / packages.Count;
+
+            foreach (var pack in packages)
+            {
+                var dimensions = new int[3];
+                dimensions[0] = pack.Length;
+                dimensions[1] = pack.Width;
+                dimensions[2] = pack.Height;
+                Array.Sort(dimensions);
+
+                //var packVolume = pack.Height * pack.Length * pack.Width;
+
+                pack.Length = dimensions[0];
+                pack.Width = dimensions[1];
+                pack.Height = dimensions[2];
+
+                //if (pack.Height - pack.Length > 55)
+                //{
+                //    pack.Length = dimensions[1];
+                //    pack.Width = dimensions[2];
+                //    pack.Height = dimensions[0];
+                //}
+
+            }
+
+            _packages = packages.OrderByDescending(p => p.Height * p.Length * p.Width).ToList();
         }
 
-        /// <summary>
-        /// Creates a solution from Class Properties.
-        /// </summary>
-        /// <returns>Returns a list of PointPackages.</returns>
         public List<PointPackage> Solve()
         {
-            PosX = 0;
-            PosY = 0;
-            PosZ = 0;
+            MakeHeaps();
+            //CheckHeaps();
+            SortHeaps();
+            PackTruck();
 
-            RowX = 0;
-            _lastPlacedPackageWidth = 0;
-
-            SortPackages(Packages);
-
-            while (GetRemainingSortedPackages() > 0)
+            if (_isTruckOverFull)
             {
-                Package pack;
-                if (PosZ == 0)
-                    pack = FindBestPackage(FindNextAreaToFit());
-                else
-                    pack = FindBestPackage(FindNextAreaToFit(), false);
-
-                if (pack != null)
-                {
-                    PlacePackage(pack);
-                    _iterator = 0;
-                    continue;
-                }
-                else if (_iterator >= GetRemainingSortedPackages())
-                {
-                    Console.WriteLine("TRUCK IS FULL!111");
-                    break;
-                }
-
-                _iterator++;
+                RotatePacks();
+                GameSolution = new List<PointPackage>();
+                PackTruck();
             }
+
             return GameSolution;
         }
 
-        /// <summary>
-        /// Makes a point package from the given package and adds it to the solution. Then adds and removes the package from the relevant helper list.
-        /// </summary>
-        /// <param name="pack">The package to be added to solution.</param>
-        private void PlacePackage(Package pack)
+        private void MakeHeaps()
         {
-            var pointPack = MakePointPackage(pack);
-            GameSolution.Add(pointPack);
-            _lastPlacedPackageWidth += pack.Width;
-            _nextSpace = 0;
-
-            RemovePackFromList(pack);
-
-            RowListY.Add(pointPack);
-            RowListZ.Add(pointPack);
-        }
-
-        /// <summary>
-        /// Removes a package from the SortedPackages list.
-        /// </summary>
-        /// <param name="pack"></param>
-        private void RemovePackFromList(Package pack)
-        {
-            foreach (var list in SortedPackages)
+            double percent = 0.25;
+            var minusPercent = 1 - percent;
+            var plusPercent = 1 + percent;
+            while (_packages.Count > 0)
             {
-                for (int i = 0; i < list.Count; i++)
+                _heaps.Add(new List<Package>());
+                var currentHeapOriginal = new List<Package>();
+                int tempHeight = 0;
+                for (int i = 2; i < _orderClasses; i++)
                 {
-                    if (list[i].Id == pack.Id)
-                        list.RemoveAt(i);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Places a Package in the truck by coordinates.
-        /// </summary>
-        /// <param name="package">The package to be placed.</param>
-        /// <returns>Returns the package as a PointPackage at the given coordinates.</returns>
-        private PointPackage MakePointPackage(Package package)
-        {
-            var pointPackage = new PointPackage();
-            pointPackage.OrderClass = package.OrderClass;
-            pointPackage.WeightClass = package.WeightClass;
-            pointPackage.Id = package.Id;
-
-            pointPackage.x1 = PosX;
-            pointPackage.x2 = PosX;
-            pointPackage.x3 = PosX;
-            pointPackage.x4 = PosX;
-            pointPackage.x5 = PosX + package.Length;
-            pointPackage.x6 = PosX + package.Length;
-            pointPackage.x7 = PosX + package.Length;
-            pointPackage.x8 = PosX + package.Length;
-
-            pointPackage.y1 = PosY;
-            pointPackage.y2 = PosY;
-            pointPackage.y3 = PosY;
-            pointPackage.y4 = PosY;
-            pointPackage.y5 = PosY + package.Width;
-            pointPackage.y6 = PosY + package.Width;
-            pointPackage.y7 = PosY + package.Width;
-            pointPackage.y8 = PosY + package.Width;
-
-            pointPackage.z1 = PosZ;
-            pointPackage.z2 = PosZ;
-            pointPackage.z3 = PosZ;
-            pointPackage.z4 = PosZ;
-            pointPackage.z5 = PosZ + package.Height;
-            pointPackage.z6 = PosZ + package.Height;
-            pointPackage.z7 = PosZ + package.Height;
-            pointPackage.z8 = PosZ + package.Height;
-
-            return pointPackage;
-        }
-
-        /// <summary>
-        /// Finds the package that best fits the given area.
-        /// </summary>
-        /// <returns>Returns a Package, or null if none would fit the area.</returns>
-        private Package FindBestPackage((int, int, int) area, bool heavyPrio = true)
-        {
-            Package pack = null;
-            if (heavyPrio)
-            {
-                for (int w = WeightClasses - 1; w >= 0; w--)
-                {
-                    pack = FindPackageFromOrderClass(area, w);
-                }
-            }
-            else
-            {
-                for (int w = 0; w < WeightClasses; w++)
-                {
-                    pack = FindPackageFromOrderClass(area, w);
-                }
-            }
-            return pack;
-        }
-
-        /// <summary>
-        /// Finds the first package that fits the area searching by order class.
-        /// </summary>
-        /// <param name="area"></param>
-        /// <param name="w"></param>
-        /// <returns></returns>
-        private Package FindPackageFromOrderClass((int, int, int) area, int w)
-        {
-            for (int o = OrderClasses - 1; o >= 0; o--)
-            {
-                if (SortedPackages[w, o].Count > 0)
-                {
-                    for (int i = 0; i < SortedPackages[w, o].Count; i++)
+                    foreach (var pack in _packages)
                     {
-                        var pack = SortedPackages[w, o][i];
-
-                        for (int j = 0; j < 6; j++)
+                        var lastHeap = _heaps[^1];
+                        tempHeight = lastHeap.Sum(p => p.Height);
+                        if (tempHeight + pack.Height < _truckZ)
                         {
-                            var turnedPack = TurnPackage(pack, j);
-
-                            if (DoesPackageFit(turnedPack, area))
+                            if (lastHeap.Count > 0)
                             {
-                                return turnedPack;
+                                if ((lastHeap[0].Length * plusPercent > pack.Length) && (lastHeap[0].Length * minusPercent < pack.Length))
+                                {
+                                    if ((lastHeap[0].Width * plusPercent > pack.Width) && (lastHeap[0].Width * minusPercent < pack.Width))
+                                    {
+                                        if ((lastHeap[0].OrderClass <= pack.OrderClass + i) && (lastHeap[0].OrderClass >= pack.OrderClass - i))
+                                        {
+                                            lastHeap.Add(pack);
+                                            currentHeapOriginal.Add(pack);
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                lastHeap.Add(pack);
+                                currentHeapOriginal.Add(pack);
                             }
                         }
                     }
-                    if (!_YFull)
-                    {
-                        _YFull = true;
-                    }
+                    foreach (var pack in currentHeapOriginal)
+                        _packages.Remove(pack);
                 }
             }
-            return null;
         }
 
-        /// <summary>
-        /// Tests a package against a given area to see if it fits.
-        /// </summary>
-        /// <param name="pack">The package to be tested.</param>
-        /// <param name="area">The area to test against.</param>
-        /// <returns>Returns true if the package fits within the area.</returns>
-        private bool DoesPackageFit(Package pack, (int, int, int) area)
+        private void RotatePacks()
         {
-            return pack.Length < area.Item1 && pack.Width < area.Item2 && pack.Height < area.Item3;
-        }
-
-        /// <summary>
-        /// Checks if there are packages left to sort in the SortedPackages array.
-        /// </summary>
-        /// <returns>Returns true if there are packages left in the array.</returns>
-        private bool PackagesLeft()
-        {
-            foreach (var list in SortedPackages)
+            foreach (var heap in _heaps)
             {
-                if (list.Count > 0)
+                foreach (var pack in heap)
                 {
-                    return true;
+                    int width = pack.Width;
+                    int length = pack.Length;
+                    pack.Width = length;
+                    pack.Length = width;
                 }
             }
-            return false;
         }
 
-        /// <summary>
-        /// Rotates a package according to a given iterator. This is meant to be used in a loop.
-        /// </summary>
-        /// <param name="pack">The package to be rotated.</param>
-        /// <param name="turn">Iterator controlling what rotations to apply to the given package.</param>
-        /// <returns>returns a rotated package.</returns>
+        // Används inte i dagsläget, men den får ligga kvar för framtida optimering.
         private Package TurnPackage(Package pack, int turn)
         {
-            var turnedPack = new Package();
+            Package turnedPack = new();
             turnedPack.Id = pack.Id;
             turnedPack.OrderClass = pack.OrderClass;
             turnedPack.WeightClass = pack.WeightClass;
@@ -263,164 +149,173 @@ namespace DotNet
                     turnedPack.Length = l;
                     turnedPack.Width = w;
                     turnedPack.Height = h;
-                    return turnedPack;
+                    break;
                 case 1:
                     turnedPack.Length = l;
                     turnedPack.Width = h;
                     turnedPack.Height = w;
-                    return turnedPack;
+                    break;
                 case 2:
                     turnedPack.Length = w;
                     turnedPack.Width = l;
                     turnedPack.Height = h;
-                    return turnedPack;
+                    break;
                 case 3:
                     turnedPack.Length = w;
                     turnedPack.Width = h;
                     turnedPack.Height = l;
-                    return turnedPack;
+                    break;
                 case 4:
                     turnedPack.Length = h;
                     turnedPack.Width = w;
                     turnedPack.Height = l;
-                    return turnedPack;
+                    break;
                 case 5:
                     turnedPack.Length = h;
                     turnedPack.Width = l;
                     turnedPack.Height = w;
-                    return turnedPack;
+                    break;
                 default:
                     return null;
             }
+            turnedPack.Id = pack.Id;
+            turnedPack.OrderClass = pack.OrderClass;
+            turnedPack.WeightClass = pack.WeightClass;
+
+            return turnedPack;
         }
 
-        /// <summary>
-        /// Finds the next area to place a package in.
-        /// </summary>
-        /// <returns>Returns a tuple (length, width, height)</returns>
-        private (int, int, int) FindNextAreaToFit()
+        private void CheckHeaps()
         {
-            var tmpX = 0;
-            var tmpY = 0;
-            var tmpZ = 0;
-
-            if (_ZFull)
+            double percent = 0.1;
+            var minusPercent = 1 - percent;
+            var plusPercent = 1 + percent;
+            var tempHeap = new List<Package>();
+            var tempHeaps = new List<List<Package>>();
+            foreach (var heap in _heaps)
             {
-                RowX = RowListZ.Max(p => p.x5);
 
-                _ZFull = false;
-                _YFull = false;
-
-                RowListY.Clear();
-                RowListZ.Clear();
-
-                _lastPlacedPackageWidth = 0;
-                _nextSpace = 0;
+                if (heap.Count == 1)
+                {
+                    tempHeaps.Add(heap);
+                }
             }
 
-            if (_YFull)
+            foreach (var heap in tempHeaps)
             {
-                var lowest = new PointPackage();
-                if (RowListY.Count > 0)
-                    lowest = RowListY.OrderBy(p => p.z5).ToList()[_nextSpace];
-
-                if (_nextSpace < RowListY.Count - 1)
-                    _nextSpace++;
-                else
+                var tempHeightOfTempHeap = tempHeap.Sum(p => p.Height);
+                if (tempHeightOfTempHeap + heap[0].Height < _truckZ)
                 {
-                    _ZFull = true;
-                    _nextSpace = 0;
-                }
-
-
-                var nexts = RowListY.FindAll(p => p.y1 > lowest.y1);
-                if (nexts.Count > 0)
-                {
-                    var next = nexts.First();
-
-                    tmpX = Truck.Length - RowX; // - RowX
-                    tmpY = next.y1 - lowest.y1;
-                    tmpZ = Truck.Height - lowest.z5;
-                }
-                else
-                {
-                    tmpX = Truck.Length - RowX; // Bytte från lowest.x5 till RowX
-                    tmpY = Truck.Width - lowest.y1;
-                    tmpZ = Truck.Height - lowest.z5;
-                }
-
-                ReplacePack = lowest;
-
-                PosX = lowest.x1;
-                PosY = lowest.y1;
-                PosZ = lowest.z5;
-            }
-            else
-            {
-                tmpX = Truck.Length - RowX; // - RowX
-                tmpY = Truck.Width - _lastPlacedPackageWidth;
-                tmpZ = Truck.Height;
-
-                PosX = RowX;
-                PosY = _lastPlacedPackageWidth;
-                PosZ = 0;
-            }
-
-            var area = (tmpX, tmpY, tmpZ);
-
-            return area;
-        }
-
-        /// <summary>
-        /// Checks if there are packages left to sort in the SortedPackages array.
-        /// </summary>
-        /// <returns>Returns true if there are packages left in the array.</returns>
-        private int GetRemainingSortedPackages()
-        {
-            var remainingPackages = 0;
-
-            foreach (var list in SortedPackages)
-                remainingPackages += list.Count;
-
-            return remainingPackages;
-        }
-
-        /// <summary>
-        /// Splits Packages into lists by WeightClass and OrderClass, each list sorted by Package size.
-        /// </summary>
-        private void SortPackages(List<Package> packages)
-        {
-            var sortedPacks = new List<Package>[WeightClasses, OrderClasses];
-            for (int i = 0; i < WeightClasses; i++)
-            {
-                for (int j = 0; j < OrderClasses; j++)
-                {
-                    if (i == 1)
-                        sortedPacks[i, j] = Packages.FindAll(p => p.WeightClass == 2 && p.OrderClass == j);
+                    if (tempHeap.Count > 0)
+                    {
+                        if ((tempHeap[0].Length * plusPercent > heap[0].Length) && (tempHeap[0].Length * minusPercent < heap[0].Length))
+                        {
+                            if ((tempHeap[0].Width * plusPercent > heap[0].Width) && (tempHeap[0].Width * minusPercent < heap[0].Width))
+                            {
+                                tempHeap.Add(heap[0]);
+                                _heaps.Remove(heap);
+                            }
+                        }
+                    }
                     else
-                        sortedPacks[i, j] = Packages.FindAll(p => p.WeightClass < 2 && p.OrderClass == j);
-
-                    sortedPacks[i, j] = sortedPacks[i, j].OrderByDescending(p => (p.Length * p.Width * p.Height)).ToList();
+                    {
+                        tempHeap.Add(heap[0]);
+                        _heaps.Remove(heap);
+                    }
                 }
             }
 
-            foreach (var list in sortedPacks)
+            _heaps.Add(tempHeap);
+        }
+
+        private void SortHeaps()
+        {
+            for (int i = 0; i < _heaps.Count; i++)
             {
-                for (int i = 0; i < list.Count; i++)
-                {
-                    var dimensions = new int[3];
-                    dimensions[0] = list[i].Length;
-                    dimensions[1] = list[i].Width;
-                    dimensions[2] = list[i].Height;
-                    Array.Sort(dimensions);
-
-                    list[i].Length = dimensions[0];
-                    list[i].Width = dimensions[1];
-                    list[i].Height = dimensions[2];
-                }
+                _heaps[i] = _heaps[i].OrderByDescending(h => h.WeightClass).ToList();
             }
 
-            SortedPackages = sortedPacks;
+            _heaps = _heaps.OrderByDescending(h => h.Sum(x => x.OrderClass / h.Count)).ToList();
+        }
+
+        private void PackTruck()
+        {
+            int tempY = 0;
+            int tempX = 0;
+
+            foreach (var heap in _heaps)
+            {
+                _zp = 0;
+
+                tempY = heap.Max(p => p.Width);
+                tempX = heap.Max(p => p.Length);
+
+                if (_yp + tempY < _truckY && _xp + tempX < _truckX)
+                {
+                    foreach (var pack in heap)
+                    {
+                        AddPackage(pack);
+                        _zp += pack.Height;
+                    }
+                    _yp += tempY;
+                    tempY = 0;
+                }
+                else if (_xp + tempX < _truckX)
+                {
+                    _yp = 0;
+                    _xp = _xp < _lastKnownLongestPackage ? _lastKnownLongestPackage : _xp;
+                    foreach (var pack in heap)
+                    {
+                        AddPackage(pack);
+                        _zp += pack.Height;
+                    }
+                    _yp += tempY;
+                    tempY = 0;
+                }
+                else
+                    Console.WriteLine("Skit ner dig!");
+            }
+        }
+
+        private void AddPackage(Package package)
+        {
+            var placedPackage = new PointPackage()
+            {
+                Id = package.Id,
+                x1 = _xp,
+                x2 = _xp,
+                x3 = _xp,
+                x4 = _xp,
+                x5 = _xp + package.Length,
+                x6 = _xp + package.Length,
+                x7 = _xp + package.Length,
+                x8 = _xp + package.Length,
+                y1 = _yp,
+                y2 = _yp,
+                y3 = _yp,
+                y4 = _yp,
+                y5 = _yp + package.Width,
+                y6 = _yp + package.Width,
+                y7 = _yp + package.Width,
+                y8 = _yp + package.Width,
+                z1 = _zp,
+                z2 = _zp,
+                z3 = _zp,
+                z4 = _zp,
+                z5 = _zp + package.Height,
+                z6 = _zp + package.Height,
+                z7 = _zp + package.Height,
+                z8 = _zp + package.Height,
+                OrderClass = package.OrderClass,
+                WeightClass = package.WeightClass
+            };
+
+            _lastKnownLongestPackage = _lastKnownLongestPackage < placedPackage.x5 ? placedPackage.x5 : _lastKnownLongestPackage;
+
+            if (_lastKnownLongestPackage > _truckX)
+                _isTruckOverFull = true;
+
+            GameSolution.Add(placedPackage);
         }
     }
 }

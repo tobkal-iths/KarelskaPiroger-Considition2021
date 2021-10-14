@@ -59,7 +59,7 @@ namespace DotNet
         public List<PointPackage> Solve()
         {
             MakeHeaps();
-            CheckHeaps();
+            //CheckHeaps();
             SortHeaps();
             PackTruck();
 

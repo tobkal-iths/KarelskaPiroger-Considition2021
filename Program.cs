@@ -18,7 +18,7 @@ namespace DotNet
         {
             var gameInformation = GameLayer.NewGame(Map);
             //var solver = new GreedySolver(gameInformation.Dimensions, gameInformation.Vehicle);
-            var solver = new JonasSolver(gameInformation.Dimensions, gameInformation.Vehicle);
+            var solver = new SuperSolver(gameInformation.Dimensions, gameInformation.Vehicle);
             var solution = solver.Solve();
             var submitSolution = GameLayer.Submit(JsonSerializer.Serialize(solution), Map);
            
