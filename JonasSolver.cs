@@ -186,46 +186,45 @@ namespace DotNet
 
         private void SortHeaps()
         {
-            //double percent = 0.25;
-            //var minusPercent = 1 - percent;
-            //var plusPercent = 1 + percent;
-            //var tempHeap = new List<Package>();
-            //var tempHeaps = new List<List<Package>>();
-            //foreach (var heap in _heaps)
-            //{
+            double percent = 0.1;
+            var minusPercent = 1 - percent;
+            var plusPercent = 1 + percent;
+            var tempHeap = new List<Package>();
+            var tempHeaps = new List<List<Package>>();
+            foreach (var heap in _heaps)
+            {
 
-            //    if(heap.Count == 1)
-            //    {
-            //        tempHeaps.Add(heap);
-            //    }
-            //}
+                if(heap.Count == 1)
+                {
+                    tempHeaps.Add(heap);
+                }
+            }
 
-            //foreach (var heap in tempHeaps)
-            //{
-            //    var tempHeightOfTempHeap = tempHeap.Sum(p => p.Height);
-            //    if (heap.Count == 1 && tempHeightOfTempHeap + heap[0].Height < _truckZ)
-            //    {
-            //        if (tempHeap.Count > 0)
-            //        {
-            //            if ((tempHeap[0].Length * plusPercent > heap[0].Length) && (tempHeap[0].Length * minusPercent < heap[0].Length))
-            //            {
-            //                if ((tempHeap[0].Width * plusPercent > heap[0].Width) && (tempHeap[0].Width * minusPercent < heap[0].Width))
-            //                {
-            //                    tempHeap.Add(heap[0]);
-            //                    _heaps.Remove(heap);
-            //                }
-            //            }
-            //        }
-            //        else
-            //        {
-            //            tempHeap.Add(heap[0]);
-            //            _heaps.Remove(heap);
-            //        }
+            foreach (var heap in tempHeaps)
+            {
+                var tempHeightOfTempHeap = tempHeap.Sum(p => p.Height);
+                if (tempHeightOfTempHeap + heap[0].Height < _truckZ)
+                {
+                    if (tempHeap.Count > 0)
+                    {
+                        if ((tempHeap[0].Length * plusPercent > heap[0].Length) && (tempHeap[0].Length * minusPercent < heap[0].Length))
+                        {
+                            if ((tempHeap[0].Width * plusPercent > heap[0].Width) && (tempHeap[0].Width * minusPercent < heap[0].Width))
+                            {
+                                tempHeap.Add(heap[0]);
+                                _heaps.Remove(heap);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        tempHeap.Add(heap[0]);
+                        _heaps.Remove(heap);
+                    }
+                }
+            }
 
-            //    }
-            //}
-
-            //_heaps.Add(tempHeap);
+            _heaps.Add(tempHeap);
 
             for (int i = 0; i < _heaps.Count; i++)
             {
